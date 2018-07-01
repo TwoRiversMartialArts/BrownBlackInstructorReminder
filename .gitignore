@@ -1,0 +1,7 @@
+*secret*
+*credential*
+/lib
+email.json
+*.log
+*.pyc
+notify.sh
