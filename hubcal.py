@@ -89,7 +89,8 @@ def main() :
     elif dow == 5 : # Saturday
         send = (thisSun not in taken)
     else : send = False
-    if send : email( msg, sendTo = to )
+    if send or ('--force' in sys.argv) : 
+        email( msg, sendTo = to )
 
 #----------------------------------------------------------------------
 def teachInfo( d, taken ) :
