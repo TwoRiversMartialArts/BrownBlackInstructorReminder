@@ -64,9 +64,9 @@ def main() :
           the brown and black belt class instructor sign-up schedule.
           Please consider signing up for an open date on the calender.
           If you are not sure how, reply to this mail and it will be
-          done for you. You must be at least third dan to teach on Sundays
-          and at least fourth dan to teach on Fridays.
-          You can always check the sign-ups at http://friday.trma.us
+          done for you. You must be at least third dan to teach either 
+          Fridays or Sundays. You can always check the sign-ups at
+          http://friday.trma.us
           ''').replace('\n',' ')
     msg = ('Friday and Sunday instructors,\n' + msg 
            + '\n\n' 
