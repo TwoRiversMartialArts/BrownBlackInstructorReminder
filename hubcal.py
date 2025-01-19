@@ -16,17 +16,17 @@ address and password.
 @license MIT
 '''
 
-import sys
+import sys, pdb
 from os import path
 
 INSTDIR = path.dirname(__file__)
-sys.path = [ path.join( INSTDIR,'lib' ) ] + sys.path
+#sys.path = [ path.join( INSTDIR,'lib' ) ] + sys.path
 
 from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 import six, json
-from dateutil import parser
+import pandas as pd
 from datetime import timedelta, datetime, date
 import textwrap
 
@@ -45,18 +45,19 @@ def main() :
     today = datetime.today().date()
     dow = today.weekday() # 0 is Monday, 6 is Sunday
     toSun = 6-dow
-    toFri = (4-dow) if (dow < 4) else (11-dow)
+    toFri = (11-dow)%7
     thisFri = today + timedelta(days=toFri)
     thisSun = today + timedelta(days=toSun)
 
     sundays = [ (today + timedelta(days=(i*7 + toSun))) for i in range(6) ]
     fridays = [ (today + timedelta(days=(i*7 + toFri))) for i in range(6) ]
-    toTeach = sorted(sundays + fridays)
+    #toTeach = sorted(sundays + fridays)
+    toTeach = sorted(fridays)
     taken = {}
 
     for event in ev:
         start = event['start'].get('dateTime', event['start'].get('date'))
-        d = parser.parse(start).date()
+        d = pd.to_datetime(start).date()
         taken[d] = event['summary']
 
     msg = textwrap.dedent('''\
@@ -64,11 +65,11 @@ def main() :
           the brown and black belt class instructor sign-up schedule.
           Please consider signing up for an open date on the calender.
           If you are not sure how, reply to this mail and it will be
-          done for you. You must be at least third dan to teach either 
-          Fridays or Sundays. You can always check the sign-ups at
-          http://friday.trma.us
+          done for you. You must be at least third dan to teach a
+          brown and black belt class.  Check the sign-ups at
+          http://friday.trma.us, which includes further instructions.
           ''').replace('\n',' ')
-    msg = ('Friday and Sunday instructors,\n' + msg 
+    msg = ('Friday instructors,\n' + msg 
            + '\n\n' 
            + '\n'.join( teachInfo( d, taken ) for d in toTeach ))
     msg += '\n\nPil sung.'
@@ -85,9 +86,9 @@ def main() :
     if dow == 0 : # Monday
         send = thisFri not in taken
     elif dow == 2 : # Wednesday
-        send = (thisFri not in taken) or (thisSun not in taken)
-    elif dow == 5 : # Saturday
-        send = (thisSun not in taken)
+        send = (thisFri not in taken) #or (thisSun not in taken)
+    #elif dow == 5 : # Saturday
+    #    send = (thisSun not in taken)
     else : send = False
     if send or ('--force' in sys.argv) : 
         email( msg, sendTo = to )
@@ -95,7 +96,7 @@ def main() :
 #----------------------------------------------------------------------
 def teachInfo( d, taken ) :
    return '%s%s : %s' % (
-      d.weekday()==4 and 'Friday,  ' or 'Sunday, ',
+      d.weekday()==4 and 'Friday, ' or 'Sunday, ',
       d.isoformat()[5:],
       taken.get(d, '** needs an instructor' ))
 
@@ -103,6 +104,7 @@ def teachInfo( d, taken ) :
 def email(body, sendFrom=None, sendTo=[], subject=None, creds = emailcred) :
    import smtplib
 
+   six.print_("Sending email to %s" % (sendTo, ))
    if isinstance(creds,six.string_types) :
       with open(creds,'r') as f :
          creds = json.load(f)
@@ -110,7 +112,7 @@ def email(body, sendFrom=None, sendTo=[], subject=None, creds = emailcred) :
    gmail.ehlo()
    msg = "From: %s\nTo: %s\nSubject: %s\n\n%s"
 
-   Subject = subject or 'Brown/Black belt instructor sign-up'
+   Subject = subject or 'Brown/Black belt Hub class instructor sign-up'
    From = sendFrom or creds['uid']
    To = sendTo
    gmail.login(creds['uid'],creds['pwd'])
